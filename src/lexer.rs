@@ -2,18 +2,43 @@ use crate::tokens::{Token, TokenType};
 
 pub struct Lexer {
     input: String,
-    position: usize, // current position in the input (points to the char)
-    readPosition: usize, // current reading position (after current char)
-    ch: u8, // current char under examination
+    position: usize,
+    read_position: usize,
+    ch: u8,
 }
 
 impl Lexer {
     pub fn new(input: String) -> Self {
-        todo!()
+        let mut lexer = Self { 
+            input,
+            position: 0,
+            read_position: 0,
+            ch: 0
+        };
+        lexer.read_char();
+        lexer
     }
 
-    pub fn next_token(&self) -> Token {
-        todo!()
+    pub fn read_char(&mut self) {
+        self.ch = *self.input.as_bytes().get(self.read_position).unwrap_or(&0);
+        self.position = self.read_position;
+        self.read_position += 1;
+    }
+
+    pub fn next_token(&mut self) -> Token {
+        let token = match self.ch {
+            b'=' => Token::new(TokenType::ASSIGN, "=".to_string()),
+            b';' => Token::new(TokenType::SEMICOLON, ";".to_string()),
+            b'(' => Token::new(TokenType::LPAREN, "(".to_string()),
+            b')' => Token::new(TokenType::RPAREN, ")".to_string()),
+            b',' => Token::new(TokenType::COMMA, ",".to_string()),
+            b'+' => Token::new(TokenType::PLUS, "+".to_string()),
+            b'{' => Token::new(TokenType::LBRACE, "{".to_string()),
+            b'}' => Token::new(TokenType::RBRACE, "}".to_string()),
+            _ => Token::new(TokenType::EOF, "".to_string())
+        };
+        self.read_char();
+        token
     }
 }
 
@@ -38,7 +63,7 @@ mod tests {
             Token::new(TokenType::EOF, "".to_string()),
         ];
 
-        let lexer = Lexer::new(input);
+        let mut lexer = Lexer::new(input);
 
         expected.iter().for_each(|t| {
             let token = lexer.next_token();
