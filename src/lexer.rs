@@ -26,6 +26,8 @@ impl Lexer {
     }
 
     pub fn next_token(&mut self) -> Token {
+        self.skip_whitespace();
+        // TODO: refactor so this returns (TokenType, literal) and call Token::new once afterwards
         let token = match self.ch {
             b'=' => Token::new(TokenType::ASSIGN, "=".to_string()),
             b';' => Token::new(TokenType::SEMICOLON, ";".to_string()),
@@ -35,11 +37,58 @@ impl Lexer {
             b'+' => Token::new(TokenType::PLUS, "+".to_string()),
             b'{' => Token::new(TokenType::LBRACE, "{".to_string()),
             b'}' => Token::new(TokenType::RBRACE, "}".to_string()),
-            _ => Token::new(TokenType::EOF, "".to_string())
+            0 => Token::new(TokenType::EOF, "".to_string()),
+            _ => {
+                if is_letter(self.ch) {
+                    let literal = self.read_identifier();
+                    let token_type = Token::lookup_indent(&literal);
+                    return Token::new(token_type, literal)
+                } else if is_digit(self.ch) {
+                    let literal = self.read_number();
+                    let token_type = TokenType::INT;
+                    return Token::new(token_type, literal)
+                }
+                else {
+                    Token::new(TokenType::ILLEGAL, "".to_string())
+                }
+            }
         };
         self.read_char();
         token
     }
+
+    fn read_identifier(&mut self) -> String {
+        let start = self.position;
+        while is_letter(self.ch) {
+            self.read_char();
+        }
+
+        self.input[start..self.position].to_string()
+    }
+
+    fn read_number(&mut self) -> String {
+        let start = self.position;
+        while is_digit(self.ch) {
+            self.read_char();
+        }
+
+        self.input[start..self.position].to_string()
+    }
+
+    fn skip_whitespace(&mut self) {
+        while self.ch.is_ascii_whitespace() {
+            self.read_char();
+        }
+    }
+
+}
+
+fn is_letter(ch: u8) -> bool {
+    ch.is_ascii_alphabetic() || ch == b'_'
+}
+
+fn is_digit(ch: u8) -> bool {
+    ch.is_ascii_digit()
 }
 
 #[cfg(test)]
