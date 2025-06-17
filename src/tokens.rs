@@ -18,50 +18,52 @@ impl Token {
     pub fn lookup_indent(ident: &str) -> TokenType {
 
         let keywords = HashMap::from([
-            (String::from("fn"), TokenType::FUNCTION),
-            (String::from("let"), TokenType::LET),
-            (String::from("true"), TokenType::TRUE),
-            (String::from("false"), TokenType::FALSE),
-            (String::from("if"), TokenType::IF),
-            (String::from("else"), TokenType::ELSE),
-            (String::from("return"), TokenType::RETURN),
+            (String::from("fn"), TokenType::Function),
+            (String::from("let"), TokenType::Let),
+            (String::from("true"), TokenType::True),
+            (String::from("false"), TokenType::False),
+            (String::from("if"), TokenType::If),
+            (String::from("else"), TokenType::Else),
+            (String::from("return"), TokenType::Return),
         ]);
 
         if let Some(token_type) = keywords.get(ident) {
             token_type.clone()
         } else {
-            TokenType::IDENT
+            TokenType::Ident
         }
     }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TokenType {
-    ILLEGAL,
+    Illegal,
     EOF,
-    IDENT,
-    INT,
-    ASSIGN,
+    Ident,
+    Int,
+    Assign,
     // operators
-    PLUS,
-    MINUS,
-    BANG,
-    ASTERISK,
-    SLASH,
+    Plus,
+    Minus,
+    Bang,
+    Asterisk,
+    Slash,
     LT,
     GT,
-    COMMA,
-    SEMICOLON,
-    LPAREN,
-    RPAREN,
-    LBRACE,
-    RBRACE,
+    Comma,
+    SemiColon,
+    LParen,
+    RParen,
+    LBrace,
+    RBrace,
+    Eq,
+    NotEq,
     // keywords
-    FUNCTION,
-    LET,
-    TRUE,
-    FALSE,
-    IF,
-    ELSE,
-    RETURN,
+    Function,
+    Let,
+    True,
+    False,
+    If,
+    Else,
+    Return,
 }
