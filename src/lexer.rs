@@ -35,6 +35,12 @@ impl Lexer {
             b')' => Token::new(TokenType::RPAREN, ")".to_string()),
             b',' => Token::new(TokenType::COMMA, ",".to_string()),
             b'+' => Token::new(TokenType::PLUS, "+".to_string()),
+            b'-' => Token::new(TokenType::MINUS, "-".to_string()),
+            b'!' => Token::new(TokenType::BANG, "!".to_string()),
+            b'*' => Token::new(TokenType::ASTERISK, "*".to_string()),
+            b'/' => Token::new(TokenType::SLASH, "/".to_string()),
+            b'<' => Token::new(TokenType::LT, "<".to_string()),
+            b'>' => Token::new(TokenType::GT, ">".to_string()),
             b'{' => Token::new(TokenType::LBRACE, "{".to_string()),
             b'}' => Token::new(TokenType::RBRACE, "}".to_string()),
             0 => Token::new(TokenType::EOF, "".to_string()),
@@ -166,6 +172,78 @@ let result = add(five, ten);".to_string();
             Token::new(TokenType::COMMA, ",".to_string()),
             Token::new(TokenType::IDENT, "ten".to_string()),
             Token::new(TokenType::RPAREN, ")".to_string()),
+            Token::new(TokenType::SEMICOLON, ";".to_string()),
+            Token::new(TokenType::EOF, "".to_string()),
+        ];
+
+        let mut lexer = Lexer::new(input);
+
+        expected.iter().for_each(|t| {
+            let token = lexer.next_token();
+            assert_eq!(t, &token)
+        });
+    }
+
+    #[test]
+    fn test_next_token3() {
+        let input = "\
+let five = 5;
+let ten = 10;
+let add = fn(x, y) {
+x + y;
+};
+let result = add(five, ten);
+!-/*5;
+5 < 10 > 5;".to_string();
+
+        let expected: Vec<Token> = vec![
+            Token::new(TokenType::LET, "let".to_string()),
+            Token::new(TokenType::IDENT, "five".to_string()),
+            Token::new(TokenType::ASSIGN, "=".to_string()),
+            Token::new(TokenType::INT, "5".to_string()),
+            Token::new(TokenType::SEMICOLON, ";".to_string()),
+            Token::new(TokenType::LET, "let".to_string()),
+            Token::new(TokenType::IDENT, "ten".to_string()),
+            Token::new(TokenType::ASSIGN, "=".to_string()),
+            Token::new(TokenType::INT, "10".to_string()),
+            Token::new(TokenType::SEMICOLON, ";".to_string()),
+            Token::new(TokenType::LET, "let".to_string()),
+            Token::new(TokenType::IDENT, "add".to_string()),
+            Token::new(TokenType::ASSIGN, "=".to_string()),
+            Token::new(TokenType::FUNCTION, "fn".to_string()),
+            Token::new(TokenType::LPAREN, "(".to_string()),
+            Token::new(TokenType::IDENT, "x".to_string()),
+            Token::new(TokenType::COMMA, ",".to_string()),
+            Token::new(TokenType::IDENT, "y".to_string()),
+            Token::new(TokenType::RPAREN, ")".to_string()),
+            Token::new(TokenType::LBRACE, "{".to_string()),
+            Token::new(TokenType::IDENT, "x".to_string()),
+            Token::new(TokenType::PLUS, "+".to_string()),
+            Token::new(TokenType::IDENT, "y".to_string()),
+            Token::new(TokenType::SEMICOLON, ";".to_string()),
+            Token::new(TokenType::RBRACE, "}".to_string()),
+            Token::new(TokenType::SEMICOLON, ";".to_string()),
+            Token::new(TokenType::LET, "let".to_string()),
+            Token::new(TokenType::IDENT, "result".to_string()),
+            Token::new(TokenType::ASSIGN, "=".to_string()),
+            Token::new(TokenType::IDENT, "add".to_string()),
+            Token::new(TokenType::LPAREN, "(".to_string()),
+            Token::new(TokenType::IDENT, "five".to_string()),
+            Token::new(TokenType::COMMA, ",".to_string()),
+            Token::new(TokenType::IDENT, "ten".to_string()),
+            Token::new(TokenType::RPAREN, ")".to_string()),
+            Token::new(TokenType::SEMICOLON, ";".to_string()),
+            Token::new(TokenType::BANG, "!".to_string()),
+            Token::new(TokenType::MINUS, "-".to_string()),
+            Token::new(TokenType::SLASH, "/".to_string()),
+            Token::new(TokenType::ASTERISK, "*".to_string()),
+            Token::new(TokenType::INT, "5".to_string()),
+            Token::new(TokenType::SEMICOLON, ";".to_string()),
+            Token::new(TokenType::INT, "5".to_string()),
+            Token::new(TokenType::LT, "<".to_string()),
+            Token::new(TokenType::INT, "10".to_string()),
+            Token::new(TokenType::GT, ">".to_string()),
+            Token::new(TokenType::INT, "5".to_string()),
             Token::new(TokenType::SEMICOLON, ";".to_string()),
             Token::new(TokenType::EOF, "".to_string()),
         ];
