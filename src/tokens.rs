@@ -20,6 +20,11 @@ impl Token {
         let keywords = HashMap::from([
             (String::from("fn"), TokenType::FUNCTION),
             (String::from("let"), TokenType::LET),
+            (String::from("true"), TokenType::TRUE),
+            (String::from("false"), TokenType::FALSE),
+            (String::from("if"), TokenType::IF),
+            (String::from("else"), TokenType::ELSE),
+            (String::from("return"), TokenType::RETURN),
         ]);
 
         if let Some(token_type) = keywords.get(ident) {
@@ -51,6 +56,12 @@ pub enum TokenType {
     RPAREN,
     LBRACE,
     RBRACE,
+    // keywords
     FUNCTION,
     LET,
+    TRUE,
+    FALSE,
+    IF,
+    ELSE,
+    RETURN,
 }

@@ -127,65 +127,7 @@ mod tests {
     }
 
     #[test]
-    fn test_next_token2() {
-        let input = "\
-let five = 5;
-let ten = 10;
-let add = fn(x, y) {
-x + y;
-};
-let result = add(five, ten);".to_string();
-
-        let expected: Vec<Token> = vec![
-            Token::new(TokenType::LET, "let".to_string()),
-            Token::new(TokenType::IDENT, "five".to_string()),
-            Token::new(TokenType::ASSIGN, "=".to_string()),
-            Token::new(TokenType::INT, "5".to_string()),
-            Token::new(TokenType::SEMICOLON, ";".to_string()),
-            Token::new(TokenType::LET, "let".to_string()),
-            Token::new(TokenType::IDENT, "ten".to_string()),
-            Token::new(TokenType::ASSIGN, "=".to_string()),
-            Token::new(TokenType::INT, "10".to_string()),
-            Token::new(TokenType::SEMICOLON, ";".to_string()),
-            Token::new(TokenType::LET, "let".to_string()),
-            Token::new(TokenType::IDENT, "add".to_string()),
-            Token::new(TokenType::ASSIGN, "=".to_string()),
-            Token::new(TokenType::FUNCTION, "fn".to_string()),
-            Token::new(TokenType::LPAREN, "(".to_string()),
-            Token::new(TokenType::IDENT, "x".to_string()),
-            Token::new(TokenType::COMMA, ",".to_string()),
-            Token::new(TokenType::IDENT, "y".to_string()),
-            Token::new(TokenType::RPAREN, ")".to_string()),
-            Token::new(TokenType::LBRACE, "{".to_string()),
-            Token::new(TokenType::IDENT, "x".to_string()),
-            Token::new(TokenType::PLUS, "+".to_string()),
-            Token::new(TokenType::IDENT, "y".to_string()),
-            Token::new(TokenType::SEMICOLON, ";".to_string()),
-            Token::new(TokenType::RBRACE, "}".to_string()),
-            Token::new(TokenType::SEMICOLON, ";".to_string()),
-            Token::new(TokenType::LET, "let".to_string()),
-            Token::new(TokenType::IDENT, "result".to_string()),
-            Token::new(TokenType::ASSIGN, "=".to_string()),
-            Token::new(TokenType::IDENT, "add".to_string()),
-            Token::new(TokenType::LPAREN, "(".to_string()),
-            Token::new(TokenType::IDENT, "five".to_string()),
-            Token::new(TokenType::COMMA, ",".to_string()),
-            Token::new(TokenType::IDENT, "ten".to_string()),
-            Token::new(TokenType::RPAREN, ")".to_string()),
-            Token::new(TokenType::SEMICOLON, ";".to_string()),
-            Token::new(TokenType::EOF, "".to_string()),
-        ];
-
-        let mut lexer = Lexer::new(input);
-
-        expected.iter().for_each(|t| {
-            let token = lexer.next_token();
-            assert_eq!(t, &token)
-        });
-    }
-
-    #[test]
-    fn test_next_token3() {
+    fn test_next_token_2() {
         let input = "\
 let five = 5;
 let ten = 10;
@@ -194,7 +136,14 @@ x + y;
 };
 let result = add(five, ten);
 !-/*5;
-5 < 10 > 5;".to_string();
+5 < 10 > 5;
+
+if (5 < 10) {
+    return true;
+} else {
+    return false;
+}
+".to_string();
 
         let expected: Vec<Token> = vec![
             Token::new(TokenType::LET, "let".to_string()),
@@ -245,6 +194,23 @@ let result = add(five, ten);
             Token::new(TokenType::GT, ">".to_string()),
             Token::new(TokenType::INT, "5".to_string()),
             Token::new(TokenType::SEMICOLON, ";".to_string()),
+            Token::new(TokenType::IF, "if".to_string()),
+            Token::new(TokenType::LPAREN, "(".to_string()),
+            Token::new(TokenType::INT, "5".to_string()),
+            Token::new(TokenType::LT, "<".to_string()),
+            Token::new(TokenType::INT, "10".to_string()),
+            Token::new(TokenType::RPAREN, ")".to_string()),
+            Token::new(TokenType::LBRACE, "{".to_string()),
+            Token::new(TokenType::RETURN, "return".to_string()),
+            Token::new(TokenType::TRUE, "true".to_string()),
+            Token::new(TokenType::SEMICOLON, ";".to_string()),
+            Token::new(TokenType::RBRACE, "}".to_string()),
+            Token::new(TokenType::ELSE, "else".to_string()),
+            Token::new(TokenType::LBRACE, "{".to_string()),
+            Token::new(TokenType::RETURN, "return".to_string()),
+            Token::new(TokenType::FALSE, "false".to_string()),
+            Token::new(TokenType::SEMICOLON, ";".to_string()),
+            Token::new(TokenType::RBRACE, "}".to_string()),
             Token::new(TokenType::EOF, "".to_string()),
         ];
 
