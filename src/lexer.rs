@@ -29,53 +29,53 @@ impl Lexer {
        *self.input.as_bytes().get(self.read_position).unwrap_or(&0)
     }
 
-    fn next_token(&mut self) -> Token {
+    pub fn next_token(&mut self) -> Option<Token> {
         self.skip_whitespace();
         // TODO: refactor so this returns (TokenType, literal) and call Token::new once afterwards
         let token = match self.ch {
             b'=' => {
                 if self.peek_char() == b'=' {
                     self.read_char();
-                    Token::new(TokenType::Eq, "==".to_string())
+                    Some(Token::new(TokenType::Eq, "==".to_string()))
                 }
                 else {
-                    Token::new(TokenType::Assign, "=".to_string())
+                    Some(Token::new(TokenType::Assign, "=".to_string()))
                 }
             },
-            b';' => Token::new(TokenType::SemiColon, ";".to_string()),
-            b'(' => Token::new(TokenType::LParen, "(".to_string()),
-            b')' => Token::new(TokenType::RParen, ")".to_string()),
-            b',' => Token::new(TokenType::Comma, ",".to_string()),
-            b'+' => Token::new(TokenType::Plus, "+".to_string()),
-            b'-' => Token::new(TokenType::Minus, "-".to_string()),
+            b';' => Some(Token::new(TokenType::SemiColon, ";".to_string())),
+            b'(' => Some(Token::new(TokenType::LParen, "(".to_string())),
+            b')' => Some(Token::new(TokenType::RParen, ")".to_string())),
+            b',' => Some(Token::new(TokenType::Comma, ",".to_string())),
+            b'+' => Some(Token::new(TokenType::Plus, "+".to_string())),
+            b'-' => Some(Token::new(TokenType::Minus, "-".to_string())),
             b'!' => {
                 if self.peek_char() == b'=' {
                     self.read_char();
-                    Token::new(TokenType::NotEq, "!=".to_string())
+                    Some(Token::new(TokenType::NotEq, "!=".to_string()))
                 }
                 else {
-                    Token::new(TokenType::Bang, "!".to_string())
+                    Some(Token::new(TokenType::Bang, "!".to_string()))
                 }
             },
-            b'*' => Token::new(TokenType::Asterisk, "*".to_string()),
-            b'/' => Token::new(TokenType::Slash, "/".to_string()),
-            b'<' => Token::new(TokenType::LT, "<".to_string()),
-            b'>' => Token::new(TokenType::GT, ">".to_string()),
-            b'{' => Token::new(TokenType::LBrace, "{".to_string()),
-            b'}' => Token::new(TokenType::RBrace, "}".to_string()),
-            0 => Token::new(TokenType::EOF, "".to_string()),
+            b'*' => Some(Token::new(TokenType::Asterisk, "*".to_string())),
+            b'/' => Some(Token::new(TokenType::Slash, "/".to_string())),
+            b'<' => Some(Token::new(TokenType::LT, "<".to_string())),
+            b'>' => Some(Token::new(TokenType::GT, ">".to_string())),
+            b'{' => Some(Token::new(TokenType::LBrace, "{".to_string())),
+            b'}' => Some(Token::new(TokenType::RBrace, "}".to_string())),
+            0 => None,
             _ => {
                 if is_letter(self.ch) {
                     let literal = self.read_identifier();
                     let token_type = Token::lookup_indent(&literal);
-                    return Token::new(token_type, literal)
+                    return Some(Token::new(token_type, literal))
                 } else if is_digit(self.ch) {
                     let literal = self.read_number();
                     let token_type = TokenType::Int;
-                    return Token::new(token_type, literal)
+                    return Some(Token::new(token_type, literal))
                 }
                 else {
-                    Token::new(TokenType::Illegal, "".to_string())
+                    Some(Token::new(TokenType::Illegal, (self.ch as char).to_string()))
                 }
             }
         };
@@ -135,15 +135,14 @@ mod tests {
             Token::new(TokenType::RBrace, "}".to_string()),
             Token::new(TokenType::Comma, ",".to_string()),
             Token::new(TokenType::SemiColon, ";".to_string()),
-            Token::new(TokenType::EOF, "".to_string()),
         ];
 
         let mut lexer = Lexer::new(input);
 
         expected.iter().for_each(|t| {
-            let token = lexer.next_token();
-            assert_eq!(t, &token)
+            assert_eq!(Some(t), lexer.next_token().as_ref())
         });
+        assert_eq!(None, lexer.next_token())
     }
 
     #[test]
@@ -242,14 +241,14 @@ if (5 < 10) {
             Token::new(TokenType::NotEq, "!=".to_string()),
             Token::new(TokenType::Int, "9".to_string()),
             Token::new(TokenType::SemiColon, ";".to_string()),
-            Token::new(TokenType::EOF, "".to_string()),
         ];
 
         let mut lexer = Lexer::new(input);
 
         expected.iter().for_each(|t| {
-            let token = lexer.next_token();
-            assert_eq!(t, &token)
+            assert_eq!(Some(t), lexer.next_token().as_ref())
         });
+        assert_eq!(None, lexer.next_token())
+    
     }
 }
