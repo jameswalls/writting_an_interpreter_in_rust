@@ -7,13 +7,11 @@ enum Node {
 }
 
 struct ProgramNode {
-    statements: Vec<Statement>
+    statements: Vec<StatementNode>
 }
-struct StatementNode {}
-struct ExpressionNode {}
 
 impl Node {
-    fn token_literal(self) -> String {
+    fn token_literal(&self) -> String {
         match self {
             Node::Program(p) => p.statements.first().unwrap_or(return "".to_string()).token_literal(),
             Node::Statement(s) => todo!(),
@@ -22,20 +20,38 @@ impl Node {
     }
 }
 
-enum Statement {
-    Let(LetStatement),
+enum StatementNode {
+    Let(LetStatement)
 }
 
-impl Statement {
-   fn statement_node(&self) { todo!() }
-   fn token_literal(&self) -> String { todo!() }
+impl StatementNode {
+    fn token_literal(&self) -> String {
+        match self {
+            Self::Let(s) => s.token.literal.clone(),
+        }
+    }
+    fn statment_node(&self) { todo!() }
 }
-
-enum Expression {}
-
 
 struct LetStatement {
     token: Token,
-    name: String,
-    value: Expression,
+    name: IdentifierExpression,
+    value: ExpressionNode,
+}
+
+enum ExpressionNode {
+    Identifier(IdentifierExpression)
+}
+impl ExpressionNode {
+    fn token_literal(&self) -> String { todo!() }
+}
+
+struct IdentifierExpression {
+    token: Token,
+    value: String,
+}
+
+impl IdentifierExpression {
+    fn token_literal(&self) -> String { todo!() }
+    fn expression_node(&self) { todo!() }
 }

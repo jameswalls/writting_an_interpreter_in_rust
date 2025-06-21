@@ -4,7 +4,7 @@ use std::collections::HashMap;
 #[derive(Debug, PartialEq)]
 pub struct Token {
     token_type: TokenType,
-    literal: String,
+    pub literal: String,
 }
 
 impl Token {
