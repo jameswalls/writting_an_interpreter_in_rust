@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Token {
-    token_type: TokenType,
+    pub token_type: TokenType,
     pub literal: String,
 }
 

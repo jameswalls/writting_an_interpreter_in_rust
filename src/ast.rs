@@ -6,10 +6,6 @@ enum Node {
     Expression(ExpressionNode),
 }
 
-pub struct ProgramNode {
-    pub statements: Vec<StatementNode>
-}
-
 impl Node {
     pub fn token_literal(&self) -> String {
         match self {
@@ -20,6 +16,18 @@ impl Node {
     }
 }
 
+#[derive(Debug)]
+pub struct ProgramNode {
+    pub statements: Vec<StatementNode>
+}
+
+impl ProgramNode {
+    pub fn new() -> Self {
+        ProgramNode { statements: Vec::new() }
+    }
+}
+
+#[derive(Debug)]
 pub enum StatementNode {
     Let(LetStatement)
 }
@@ -33,13 +41,15 @@ impl StatementNode {
     fn statment_node(&self) { todo!() }
 }
 
+#[derive(Debug)]
 pub struct LetStatement {
-    token: Token,
-    name: IdentifierExpression,
-    value: ExpressionNode,
+    pub token: Token,
+    pub name: IdentifierExpression,
+    pub value: Option<ExpressionNode>,
 }
 
-enum ExpressionNode {
+#[derive(Debug)]
+pub enum ExpressionNode {
     Identifier(IdentifierExpression)
 }
 impl ExpressionNode {
@@ -49,7 +59,7 @@ impl ExpressionNode {
 #[derive(Debug, PartialEq)]
 pub struct IdentifierExpression {
     token: Token,
-    value: String,
+    pub value: String,
 }
 
 impl IdentifierExpression {
@@ -59,6 +69,6 @@ impl IdentifierExpression {
         IdentifierExpression { token, value }
     }
 
-    fn token_literal(&self) -> String { todo!() }
+    pub fn token_literal(&self) -> String { self.value.to_string() }
     fn expression_node(&self) { todo!() }
 }
