@@ -6,26 +6,26 @@ enum Node {
     Expression(ExpressionNode),
 }
 
-struct ProgramNode {
-    statements: Vec<StatementNode>
+pub struct ProgramNode {
+    pub statements: Vec<StatementNode>
 }
 
 impl Node {
-    fn token_literal(&self) -> String {
+    pub fn token_literal(&self) -> String {
         match self {
             Node::Program(p) => p.statements.first().unwrap_or(return "".to_string()).token_literal(),
-            Node::Statement(s) => todo!(),
+            Node::Statement(s) => s.token_literal(),
             Node::Expression(e) => todo!(),
         }
     }
 }
 
-enum StatementNode {
+pub enum StatementNode {
     Let(LetStatement)
 }
 
 impl StatementNode {
-    fn token_literal(&self) -> String {
+    pub fn token_literal(&self) -> String {
         match self {
             Self::Let(s) => s.token.literal.clone(),
         }
@@ -33,7 +33,7 @@ impl StatementNode {
     fn statment_node(&self) { todo!() }
 }
 
-struct LetStatement {
+pub struct LetStatement {
     token: Token,
     name: IdentifierExpression,
     value: ExpressionNode,
@@ -46,12 +46,19 @@ impl ExpressionNode {
     fn token_literal(&self) -> String { todo!() }
 }
 
-struct IdentifierExpression {
+#[derive(Debug, PartialEq)]
+pub struct IdentifierExpression {
     token: Token,
     value: String,
 }
 
 impl IdentifierExpression {
+    pub fn new(identifier: &str) -> Self {
+        let token = Token::new(TokenType::Ident, identifier.to_string());
+        let value = identifier.to_string();
+        IdentifierExpression { token, value }
+    }
+
     fn token_literal(&self) -> String { todo!() }
     fn expression_node(&self) { todo!() }
 }

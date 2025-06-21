@@ -1,5 +1,6 @@
 use crate::lexer::Lexer;
 use crate::tokens::Token;
+use crate::ast;
 use std::mem;
 
 
@@ -23,7 +24,43 @@ impl<'a> Parser<'a> {
         )
     }
 
-    fn parse_program(&self) {
+    fn parse_program(&self) -> ast::ProgramNode {
         todo!()
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_let_statements() {
+        let input = "\
+let x = 5;
+let y = 10;
+let foobar = 838383;".to_string();
+        
+        let mut l = Lexer::new(input);
+        let p = Parser::new(&mut l);
+        let program = p.parse_program();
+
+        assert_eq!(program.statements.len(), 3, "Program must contain 3 statements");
+
+        let tests = vec![
+            "x".to_string(),
+            "y".to_string(),
+            "z".to_string(),
+        ];
+
+        tests
+            .iter()
+            .zip(program.statements.iter())
+            .for_each(|(ident, s)| {
+             });
+    }
+
+    fn assert_let_statement(s: ast::StatementNode, name: String) {
+        assert_eq!(s.token_literal(), "let".to_string(), "Expected let statment")
     }
 }
