@@ -9,9 +9,9 @@ enum Node {
 impl Node {
     pub fn token_literal(&self) -> String {
         match self {
-            Node::Program(p) => p.statements.first().unwrap_or(return "".to_string()).token_literal(),
-            Node::Statement(s) => s.token_literal(),
-            Node::Expression(e) => todo!(),
+            Self::Program(p) => p.statements.first().unwrap_or(return "".to_string()).token_literal(),
+            Self::Statement(s) => s.token_literal(),
+            Self::Expression(e) => todo!(),
         }
     }
 }
@@ -29,13 +29,15 @@ impl ProgramNode {
 
 #[derive(Debug)]
 pub enum StatementNode {
-    Let(LetStatement)
+    Let(LetStatement),
+    Return(ReturnStatement),
 }
 
 impl StatementNode {
     pub fn token_literal(&self) -> String {
         match self {
             Self::Let(s) => s.token.literal.clone(),
+            Self::Return(s) => s.token.literal.clone(),
         }
     }
     fn statment_node(&self) { todo!() }
@@ -45,6 +47,12 @@ impl StatementNode {
 pub struct LetStatement {
     pub token: Token,
     pub name: IdentifierExpression,
+    pub value: Option<ExpressionNode>,
+}
+
+#[derive(Debug)]
+pub struct ReturnStatement {
+    pub token: Token,
     pub value: Option<ExpressionNode>,
 }
 

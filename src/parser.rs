@@ -54,6 +54,11 @@ impl<'a> Parser<'a> {
                         return Some(ast::StatementNode::Let(stmt))
                     }
                 },
+                TokenType::Return => {
+                    if let Some(stmt) = self.parse_return_statement() {
+                        return Some(ast::StatementNode::Return(stmt))
+                    }
+                },
                 _ => {}
             }
         }     
@@ -79,6 +84,20 @@ impl<'a> Parser<'a> {
         }
 
         Some(ast::LetStatement { token, name, value: None })
+    }
+
+    fn parse_return_statement(&mut self) -> Option<ast::ReturnStatement> {
+
+        // TODO: use Rc to see if we can avoid cloining all along
+        let token = self.cur_token.clone().unwrap();
+        self.next_token();
+
+        // TODO: skip until semicolon
+        while !self.cur_token_is(TokenType::SemiColon) {
+            self.next_token();
+        }
+
+        Some(ast::ReturnStatement { token, value: None })
     }
 
     fn cur_token_is(&self, token_type: TokenType) -> bool {
@@ -153,12 +172,36 @@ let foobar = 838383;".to_string();
              });
     }
 
-    fn assert_statement(statement_node: &ast::StatementNode, name: String) {
-        match statement_node {
-            ast::StatementNode::Let(statement) => {
-                assert_eq!("let".to_string(), statement_node.token_literal(), "Token literal is not 'let'.");
-                assert_eq!(name, statement.name.value);
-                assert_eq!(name, statement.name.token_literal());
+    #[test]
+    fn test_return_statements() {
+        let input = "\
+return 5;
+return 10;
+return 993322;".to_string();
+        
+        let mut l = Lexer::new(input);
+        let mut p = Parser::new(&mut l);
+        let program = p.parse_program();
+
+        check_parse_errors(p);
+
+        assert_eq!(program.statements.len(), 3, "Program must contain 3 statements");
+
+        program.statements.iter()
+            .for_each(|s| {
+                assert_statement(s, "".to_string());
+             });
+    }
+
+    fn assert_statement(stmt: &ast::StatementNode, name: String) {
+        match stmt {
+            ast::StatementNode::Let(s) => {
+                assert_eq!("let".to_string(), stmt.token_literal(), "Token literal is not 'let'.");
+                assert_eq!(name, s.name.value);
+                assert_eq!(name, s.name.token_literal());
+            },
+            ast::StatementNode::Return(s) => {
+                assert_eq!("return".to_string(), stmt.token_literal(), "Token literal is not 'return'.");
             },
         }
     }
