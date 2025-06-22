@@ -1,21 +1,28 @@
 use crate::lexer::Lexer;
 use crate::tokens::{Token, TokenType};
 use crate::ast;
+use std::fmt::format;
 use std::mem;
 
 
 #[derive(Debug)]
-struct Parser<'a> {
+pub struct Parser<'a> {
     lexer: &'a mut Lexer,
     cur_token: Option<Token>,
     peek_token: Option<Token>,
+    errors: Vec<String>,
 }
 
 impl<'a> Parser<'a> {
-    fn new(lexer: &'a mut Lexer) -> Self {
+    pub fn new(lexer: &'a mut Lexer) -> Self {
         let cur_token = lexer.next_token();
         let peek_token = lexer.next_token();
-        Parser { lexer, cur_token, peek_token }
+        let errors = Vec::new();
+        Parser { lexer, cur_token, peek_token, errors }
+    }
+
+    fn errors(&self) -> &Vec<String> {
+        &self.errors
     }
 
     fn next_token(&mut self) {
@@ -25,19 +32,13 @@ impl<'a> Parser<'a> {
         )
     }
 
-    fn parse_program(&mut self) -> ast::ProgramNode {
+    pub fn parse_program(&mut self) -> ast::ProgramNode {
         let mut program = ast::ProgramNode::new();
         
-        println!("parser {:?}", self);
-        println!("program {:?}", program);
         while let Some(cur_token) = &self.cur_token {
 
-            println!("cur token {:?}", cur_token);
             if let Some(stmt) = self.parse_statement() {
                 program.statements.push(stmt);
-                println!("updated program {:?}", program);
-            } else {
-                break;
             }
             self.next_token();
         }
@@ -48,38 +49,12 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> Option<ast::StatementNode> {
         if let Some(token) = &self.cur_token {
             match token.token_type {
-                TokenType::Illegal => todo!(),
-                TokenType::EOF => todo!(),
-                TokenType::Ident => todo!(),
-                TokenType::Int => todo!(),
-                TokenType::Assign => todo!(),
-                TokenType::Plus => todo!(),
-                TokenType::Minus => todo!(),
-                TokenType::Bang => todo!(),
-                TokenType::Asterisk => todo!(),
-                TokenType::Slash => todo!(),
-                TokenType::LT => todo!(),
-                TokenType::GT => todo!(),
-                TokenType::Comma => todo!(),
-                TokenType::SemiColon => todo!(),
-                TokenType::LParen => todo!(),
-                TokenType::RParen => todo!(),
-                TokenType::LBrace => todo!(),
-                TokenType::RBrace => todo!(),
-                TokenType::Eq => todo!(),
-                TokenType::NotEq => todo!(),
-                TokenType::Function => todo!(),
                 TokenType::Let => {
-                    println!("parsig statement for token {:?}", token);
                     if let Some(stmt) = self.parse_let_statement() {
-                        println!("got stmt {:?}", stmt);
                         return Some(ast::StatementNode::Let(stmt))
-                    }                 },
-                TokenType::True => todo!(),
-                TokenType::False => todo!(),
-                TokenType::If => todo!(),
-                TokenType::Else => todo!(),
-                TokenType::Return => todo!(),
+                    }
+                },
+                _ => {}
             }
         }     
         None
@@ -88,25 +63,21 @@ impl<'a> Parser<'a> {
     fn parse_let_statement(&mut self) -> Option<ast::LetStatement> {
 
         // TODO: use Rc to see if we can avoid cloining all along
-        println!("parsing let statement {:?}", self);
         let token = self.cur_token.clone().unwrap();
-        println!("\t token = {:?}", token);
         if !self.expect_peek(TokenType::Ident) {
             return None
         }
         let name = ast::IdentifierExpression::new(&self.cur_token.clone().unwrap().literal);
-        println!("\t name = {:?}", name);
 
         if !self.expect_peek(TokenType::Assign) {
             return None
         }
 
         // TODO: skip until semicolon
-        while !self.expect_peek(TokenType::SemiColon) {
+        while !self.cur_token_is(TokenType::SemiColon) {
             self.next_token();
         }
 
-        println!("reached ;");
         Some(ast::LetStatement { token, name, value: None })
     }
 
@@ -131,14 +102,26 @@ impl<'a> Parser<'a> {
             self.next_token();
             true
         } else {
+            self.peek_error(token_type);
             false
         }
+    }
+
+    fn peek_error(&mut self, token_type: TokenType) {
+        let msg = format!(
+            "expected next token to be {:?}, got {:?} instead",
+            token_type,
+            self.peek_token.clone().unwrap().token_type
+        );
+        self.errors.push(msg);
     }
 }
 
 
 #[cfg(test)]
 mod tests {
+    use crate::ast::ProgramNode;
+
     use super::*;
     
     #[test]
@@ -151,6 +134,8 @@ let foobar = 838383;".to_string();
         let mut l = Lexer::new(input);
         let mut p = Parser::new(&mut l);
         let program = p.parse_program();
+
+        check_parse_errors(p);
 
         assert_eq!(program.statements.len(), 3, "Program must contain 3 statements");
 
@@ -176,5 +161,16 @@ let foobar = 838383;".to_string();
                 assert_eq!(name, statement.name.token_literal());
             },
         }
+    }
+
+    fn check_parse_errors(p: Parser) {
+        let errors = p.errors();
+        if errors.len() == 0 {
+            return
+        }
+
+        println!("parser has {} errors", errors.len());
+        errors.iter().for_each(|e| println!("\tparser error: {}", e));
+        panic!()
     }
 }
