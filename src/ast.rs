@@ -14,6 +14,17 @@ impl Node {
             Self::Expression(e) => todo!(),
         }
     }
+
+    pub fn string(&self) -> String {
+        match self {
+            Node::Program(p) => {
+                let buffer = String::new();
+                p.statements.iter().map(|s| s.string()).collect()
+            },
+            Node::Statement(s) => s.string(),
+            Node::Expression(e) => e.string(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -22,8 +33,12 @@ pub struct ProgramNode {
 }
 
 impl ProgramNode {
-    pub fn new() -> Self {
-        ProgramNode { statements: Vec::new() }
+    pub fn new(statements: Option<Vec<StatementNode>>) -> Self {
+        if let Some(sts) = statements {
+            ProgramNode { statements: sts }
+        } else {
+            ProgramNode { statements: Vec::new() }
+        }
     }
 }
 
@@ -31,16 +46,49 @@ impl ProgramNode {
 pub enum StatementNode {
     Let(LetStatement),
     Return(ReturnStatement),
+    Expression(ExpressionStatement),
 }
 
 impl StatementNode {
     pub fn token_literal(&self) -> String {
         match self {
-            Self::Let(s) => s.token.literal.clone(),
-            Self::Return(s) => s.token.literal.clone(),
+            Self::Let(s) => s.token_literal(),
+            Self::Return(s) => s.token_literal(),
+            Self::Expression(s) => s.token_literal(),
         }
     }
     fn statment_node(&self) { todo!() }
+
+    fn string(&self) -> String {
+        let mut buffer = String::new();
+        match self {
+            StatementNode::Let(s) => {
+                buffer.push_str(&s.token_literal());
+                buffer.push_str(" ");
+                buffer.push_str(&s.name.string());
+                buffer.push_str(" = ");
+                if let Some(v) = &s.value {
+                    buffer.push_str(&v.string());
+                }
+                buffer.push_str(";");
+            },
+            StatementNode::Return(s) => {
+                buffer.push_str(&s.token_literal());
+                buffer.push_str(" ");
+                if let Some(v) = &s.value {
+                    buffer.push_str(&v.string());
+                }
+                buffer.push_str(";");
+            },
+            StatementNode::Expression(s) => {
+                if let Some(v) = &s.expression {
+                    buffer.push_str(&v.string());
+                }
+                buffer.push_str("");
+            },
+        };
+        buffer
+    }
 }
 
 #[derive(Debug)]
@@ -50,10 +98,34 @@ pub struct LetStatement {
     pub value: Option<ExpressionNode>,
 }
 
+impl LetStatement {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+}
+
 #[derive(Debug)]
 pub struct ReturnStatement {
     pub token: Token,
     pub value: Option<ExpressionNode>,
+}
+
+impl ReturnStatement {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+}
+
+#[derive(Debug)]
+pub struct ExpressionStatement {
+    pub token: Token,
+    pub expression: Option<ExpressionNode>,
+}
+
+impl ExpressionStatement {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
 }
 
 #[derive(Debug)]
@@ -62,6 +134,11 @@ pub enum ExpressionNode {
 }
 impl ExpressionNode {
     fn token_literal(&self) -> String { todo!() }
+    fn string(&self) -> String { 
+        match self {
+            ExpressionNode::Identifier(i) => i.string(),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -79,4 +156,30 @@ impl IdentifierExpression {
 
     pub fn token_literal(&self) -> String { self.value.to_string() }
     fn expression_node(&self) { todo!() }
+
+    fn string(&self) -> String {
+        self.value.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_string() {
+        let statement = StatementNode::Let(LetStatement { 
+            token: Token::new(TokenType::Let, "let".to_string()),
+            name: IdentifierExpression {
+                token: Token::new(TokenType::Ident, "myVar".to_string()),
+                value: "myVar".to_string() },
+                value: Some(ExpressionNode::Identifier(IdentifierExpression {
+                    token: Token::new(TokenType::Ident, "anotherVar".to_string()),
+                    value: "anotherVar".to_string() 
+                }))
+        }) ;
+        let mut program = Node::Program(ProgramNode::new(Some(vec![statement])));
+        
+        assert_eq!(program.string(), "let myVar = anotherVar;".to_string())
+    }
 }

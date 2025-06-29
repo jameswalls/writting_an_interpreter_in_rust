@@ -33,7 +33,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_program(&mut self) -> ast::ProgramNode {
-        let mut program = ast::ProgramNode::new();
+        let mut program = ast::ProgramNode::new(None);
         
         while let Some(cur_token) = &self.cur_token {
 
@@ -203,6 +203,7 @@ return 993322;".to_string();
             ast::StatementNode::Return(s) => {
                 assert_eq!("return".to_string(), stmt.token_literal(), "Token literal is not 'return'.");
             },
+            ast::StatementNode::Expression(expression_statement) => todo!(),
         }
     }
 
