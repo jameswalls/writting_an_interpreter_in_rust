@@ -33,7 +33,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_program(&mut self) -> ast::ProgramNode {
-        let mut program = ast::ProgramNode::new(None);
+        let mut program = ast::ProgramNode::default();
         
         while let Some(cur_token) = &self.cur_token {
 

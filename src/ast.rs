@@ -27,18 +27,14 @@ impl Node {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ProgramNode {
     pub statements: Vec<StatementNode>
 }
 
 impl ProgramNode {
-    pub fn new(statements: Option<Vec<StatementNode>>) -> Self {
-        if let Some(sts) = statements {
-            ProgramNode { statements: sts }
-        } else {
-            ProgramNode { statements: Vec::new() }
-        }
+    pub fn new(statements: Vec<StatementNode>) -> Self {
+        ProgramNode { statements }
     }
 }
 
@@ -178,7 +174,7 @@ mod tests {
                     value: "anotherVar".to_string() 
                 }))
         }) ;
-        let mut program = Node::Program(ProgramNode::new(Some(vec![statement])));
+        let mut program = Node::Program(ProgramNode::new(vec![statement]));
         
         assert_eq!(program.string(), "let myVar = anotherVar;".to_string())
     }
