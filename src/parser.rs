@@ -3,6 +3,25 @@ use crate::tokens::{Token, TokenType};
 use crate::ast;
 use std::fmt::format;
 use std::mem;
+use std::collections::HashMap;
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+enum Priority {
+    None,
+    Lowest,
+    Equals,
+    LessGreater,
+    Sum,
+    Product,
+    Prefix,
+    Call,
+}
+
+#[derive(Debug)]
+enum ParseFn {
+    Prefix(fn() -> ast::ExpressionNode),
+    Infix(fn(ast::ExpressionNode) -> ast::ExpressionNode)
+}
 
 
 #[derive(Debug)]
@@ -59,7 +78,11 @@ impl<'a> Parser<'a> {
                         return Some(ast::StatementNode::Return(stmt))
                     }
                 },
-                _ => {}
+                _ => {
+                    if let Some(stmt) = self.parse_expression_statement() {
+                        return Some(ast::StatementNode::Expression(stmt))
+                    }
+                }
             }
         }     
         None
@@ -98,6 +121,38 @@ impl<'a> Parser<'a> {
         }
 
         Some(ast::ReturnStatement { token, value: None })
+    }
+
+    fn parse_expression_statement(&mut self) -> Option<ast::ExpressionStatement> {
+        let token = self.cur_token.clone().unwrap();
+        let expression = self.parse_expression(Priority::Lowest);
+        let statement = ast::ExpressionStatement::new(token, expression);
+
+        if self.next_token_is(TokenType::SemiColon) {
+            self.next_token();
+        }
+
+        Some(statement)
+    }
+
+    fn parse_expression(&self, priority: Priority) -> Option<ast::ExpressionNode> {
+        if let Some(token) = &self.cur_token {
+            let expression = match token.token_type {
+                TokenType::Ident => {
+                    let ident = ast::IdentifierExpression::new(&token.literal);
+                    ast::ExpressionNode::Identifier(ident)
+                },
+                _ => {
+                    return None
+                }
+            };
+            return Some(expression);
+        }
+        None
+    }
+
+    fn parse_identifier(&self) -> Option<ast::ExpressionNode> {
+        todo!()
     }
 
     fn cur_token_is(&self, token_type: TokenType) -> bool {

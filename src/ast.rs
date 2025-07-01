@@ -119,6 +119,10 @@ pub struct ExpressionStatement {
 }
 
 impl ExpressionStatement {
+    pub fn new(token: Token, expression: Option<ExpressionNode>) -> Self {
+        ExpressionStatement { token, expression }
+    }
+
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
