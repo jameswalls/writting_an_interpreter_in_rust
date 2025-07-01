@@ -139,6 +139,8 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::panic;
+
     use crate::ast::ProgramNode;
 
     use super::*;
@@ -193,6 +195,41 @@ return 993322;".to_string();
              });
     }
 
+    #[test]
+    fn test_identifier_expression() {
+        let input = "foobar;".to_string();
+
+        let mut l = Lexer::new(input);
+        let mut p = Parser::new(&mut l);
+        let program = p.parse_program();
+
+        check_parse_errors(p);
+
+        assert_eq!(program.statements.len(), 1, "Program must contain 1 statement.");
+
+        assert!(matches!(program.statements[0], ast::StatementNode::Expression(_)));
+        match &program.statements[0] {
+            ast::StatementNode::Expression(s) => {
+                if let Some(e) = &s.expression {
+                    match &e {
+                        ast::ExpressionNode::Identifier(ie) => {
+                            assert_eq!(ie.value, "foobar".to_string());
+                            assert_eq!(ie.token_literal(), "foobar".to_string())
+                        },
+                        _ => {
+                            panic!("Expression is not an identifier.")
+                        }
+                    }
+                    
+                } else {
+                    panic!("Expression statement does not contain expression.")
+                }
+            },
+            _ => panic!("program.statements[0] is not an expression statemnt.")
+        };
+        
+    }
+
     fn assert_statement(stmt: &ast::StatementNode, name: String) {
         match stmt {
             ast::StatementNode::Let(s) => {
@@ -217,4 +254,5 @@ return 993322;".to_string();
         errors.iter().for_each(|e| println!("\tparser error: {}", e));
         panic!()
     }
+
 }
