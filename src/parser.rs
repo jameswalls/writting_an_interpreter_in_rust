@@ -135,6 +135,7 @@ impl<'a> Parser<'a> {
         Some(statement)
     }
 
+    // todo: make this function return a result
     fn parse_expression(&self, priority: Priority) -> Option<ast::ExpressionNode> {
         if let Some(token) = &self.cur_token {
             let expression = match token.token_type {
@@ -142,6 +143,10 @@ impl<'a> Parser<'a> {
                     let ident = ast::IdentifierExpression::new(&token.literal);
                     ast::ExpressionNode::Identifier(ident)
                 },
+                TokenType::Int => {
+                    let ident = ast::IntegerLiteralExpression::new(&token.literal.parse().unwrap());
+                    ast::ExpressionNode::IntegerLiteral(ident)
+                }
                 _ => {
                     return None
                 }
@@ -149,10 +154,6 @@ impl<'a> Parser<'a> {
             return Some(expression);
         }
         None
-    }
-
-    fn parse_identifier(&self) -> Option<ast::ExpressionNode> {
-        todo!()
     }
 
     fn cur_token_is(&self, token_type: TokenType) -> bool {
@@ -270,6 +271,41 @@ return 993322;".to_string();
                         ast::ExpressionNode::Identifier(ie) => {
                             assert_eq!(ie.value, "foobar".to_string());
                             assert_eq!(ie.token_literal(), "foobar".to_string())
+                        },
+                        _ => {
+                            panic!("Expression is not an identifier.")
+                        }
+                    }
+                    
+                } else {
+                    panic!("Expression statement does not contain expression.")
+                }
+            },
+            _ => panic!("program.statements[0] is not an expression statemnt.")
+        };
+        
+    }
+
+    #[test]
+    fn test_integer_literal_expression() {
+        let input = "5;".to_string();
+
+        let mut l = Lexer::new(input);
+        let mut p = Parser::new(&mut l);
+        let program = p.parse_program();
+
+        check_parse_errors(p);
+
+        assert_eq!(program.statements.len(), 1, "Program must contain 1 statement.");
+
+        assert!(matches!(program.statements[0], ast::StatementNode::Expression(_)));
+        match &program.statements[0] {
+            ast::StatementNode::Expression(s) => {
+                if let Some(e) = &s.expression {
+                    match &e {
+                        ast::ExpressionNode::IntegerLiteral(ie) => {
+                            assert_eq!(ie.value, 5);
+                            assert_eq!(ie.token_literal(), "5".to_string())
                         },
                         _ => {
                             panic!("Expression is not an identifier.")

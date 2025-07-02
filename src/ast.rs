@@ -53,7 +53,6 @@ impl StatementNode {
             Self::Expression(s) => s.token_literal(),
         }
     }
-    fn statment_node(&self) { todo!() }
 
     fn string(&self) -> String {
         let mut buffer = String::new();
@@ -130,13 +129,15 @@ impl ExpressionStatement {
 
 #[derive(Debug)]
 pub enum ExpressionNode {
-    Identifier(IdentifierExpression)
+    Identifier(IdentifierExpression),
+    IntegerLiteral(IntegerLiteralExpression),
 }
 impl ExpressionNode {
     fn token_literal(&self) -> String { todo!() }
     fn string(&self) -> String { 
         match self {
             ExpressionNode::Identifier(i) => i.string(),
+            ExpressionNode::IntegerLiteral(i) => i.string(),
         }
     }
 }
@@ -155,10 +156,28 @@ impl IdentifierExpression {
     }
 
     pub fn token_literal(&self) -> String { self.value.to_string() }
-    fn expression_node(&self) { todo!() }
 
     fn string(&self) -> String {
         self.value.clone()
+    }
+}
+
+#[derive(Debug)]
+pub struct IntegerLiteralExpression {
+    token: Token,
+    pub value: i64,
+}
+
+impl IntegerLiteralExpression {
+    pub fn new(identifier: &i64) -> Self {
+        let token = Token::new(TokenType::Ident, identifier.to_string());
+        IntegerLiteralExpression { token, value: *identifier }
+    }
+
+    pub fn token_literal(&self) -> String { self.value.to_string() }
+
+    fn string(&self) -> String {
+        self.value.to_string()
     }
 }
 
