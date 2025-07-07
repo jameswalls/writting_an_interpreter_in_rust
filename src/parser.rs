@@ -1,8 +1,8 @@
 use crate::lexer::Lexer;
 use crate::tokens::{Token, TokenType};
-use crate::ast;
+use crate::ast::{self, IdentifierExpression};
 use std::fmt::format;
-use std::mem;
+use std::{mem, panic};
 use std::collections::HashMap;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
@@ -136,7 +136,7 @@ impl<'a> Parser<'a> {
     }
 
     // todo: make this function return a result
-    fn parse_expression(&self, priority: Priority) -> Option<ast::ExpressionNode> {
+    fn parse_expression(&mut self, priority: Priority) -> Option<ast::ExpressionNode> {
         if let Some(token) = &self.cur_token {
             let expression = match token.token_type {
                 TokenType::Ident => {
@@ -147,7 +147,17 @@ impl<'a> Parser<'a> {
                     let ident = ast::IntegerLiteralExpression::new(&token.literal.parse().unwrap());
                     ast::ExpressionNode::IntegerLiteral(ident)
                 }
+                TokenType::Bang|TokenType::Minus => {
+                    let token = self.cur_token.as_ref().unwrap().clone();
+                    let operator = self.cur_token.as_ref().unwrap().literal.clone();
+                    self.next_token();
+                    let right = Box::new(self.parse_expression(Priority::Prefix).unwrap());
+                    let ident = ast::PrefixExpression::new(token, operator, right);
+                    ast::ExpressionNode::Prefix(ident)
+                },
                 _ => {
+                    let msg = format!("no parsing logic found for token type \"{:?}\"", token.token_type);
+                    self.errors.push(msg);
                     return None
                 }
             };
@@ -321,6 +331,52 @@ return 993322;".to_string();
         
     }
 
+    #[test]
+    fn test_parsing_prefix_expressions() {
+        struct PrefixTest {
+            input: String,
+            operator: String,
+            integer_value: i64,
+        };
+
+        let prefix_tests = vec![
+            PrefixTest { input: "!5;".to_string(), operator: "!".to_string(), integer_value: 5},
+            PrefixTest { input: "-15;".to_string(), operator: "-".to_string(), integer_value: 15},
+        ];
+
+        prefix_tests.iter().for_each(|t| {
+            let mut l = Lexer::new(t.input.to_string());
+            let mut p = Parser::new(&mut l);
+
+            let program = p.parse_program();
+
+            check_parse_errors(p);
+
+            assert_eq!(program.statements.len(), 1, "Program must contain 1 statement.");
+
+            match &program.statements[0] {
+                ast::StatementNode::Expression(s) => {
+                    if let Some(e) = &s.expression {
+                        match &e {
+                            ast::ExpressionNode::Prefix(pe) => {
+                                assert_eq!(t.operator, pe.operator);
+                                // assert_eq!(t.integer_value, e.right);
+                                assert_integer_literal(&pe.right, t.integer_value);
+                            },
+                            _ => {
+                                panic!("Expression is prefix.")
+                            }
+                        }
+
+                    } else {
+                        panic!("Statement does not contain expression.")
+                    }
+                },
+                _ => panic!("program.statements[0] is not an expression statemnt.")
+            };
+        });
+    }
+
     fn assert_statement(stmt: &ast::StatementNode, name: String) {
         match stmt {
             ast::StatementNode::Let(s) => {
@@ -344,6 +400,17 @@ return 993322;".to_string();
         println!("parser has {} errors", errors.len());
         errors.iter().for_each(|e| println!("\tparser error: {}", e));
         panic!()
+    }
+
+    fn assert_integer_literal(il: &Box<ast::ExpressionNode>, value: i64) {
+        match &**il {
+            ast::ExpressionNode::IntegerLiteral(ile) => {
+                assert_eq!(ile.value, value);
+                assert_eq!(ile.token_literal(), value.to_string());
+            },
+            _ => panic!("Not an integer literal expression")
+        }
+
     }
 
 }

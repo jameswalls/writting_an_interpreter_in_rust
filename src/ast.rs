@@ -131,6 +131,7 @@ impl ExpressionStatement {
 pub enum ExpressionNode {
     Identifier(IdentifierExpression),
     IntegerLiteral(IntegerLiteralExpression),
+    Prefix(PrefixExpression),
 }
 impl ExpressionNode {
     fn token_literal(&self) -> String { todo!() }
@@ -138,6 +139,7 @@ impl ExpressionNode {
         match self {
             ExpressionNode::Identifier(i) => i.string(),
             ExpressionNode::IntegerLiteral(i) => i.string(),
+            ExpressionNode::Prefix(i) => i.string(),
         }
     }
 }
@@ -178,6 +180,28 @@ impl IntegerLiteralExpression {
 
     fn string(&self) -> String {
         self.value.to_string()
+    }
+}
+
+#[derive(Debug)]
+pub struct PrefixExpression {
+    token: Token,
+    pub operator: String,
+    pub right: Box<ExpressionNode>,
+}
+
+impl PrefixExpression {
+    pub fn new(token: Token, operator: String, right: Box<ExpressionNode>) -> Self {
+        PrefixExpression { token, operator, right }
+    }
+    pub fn token_literal(&self) -> String { self.token.literal.clone() }
+    fn string(&self) -> String {
+        vec![
+            "(".to_string(),
+            self.operator.clone(),
+            self.right.string(),
+            ")".to_string(),
+        ].join("")
     }
 }
 
