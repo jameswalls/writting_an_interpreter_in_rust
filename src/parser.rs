@@ -376,6 +376,59 @@ return 993322;".to_string();
             };
         });
     }
+    
+    // #[test]
+    // fn test_parsing_infix_expressions() {
+    //     struct PrefixTest {
+    //         input: String,
+    //         left_value: i64,
+    //         operator: String,
+    //         right_value: i64,
+    //     };
+    //
+    //     let prefix_tests = vec![
+    //         PrefixTest {input: "5 + 5;".to_string(), left_value: 5, operator: "+".to_string(), right_value: 5},
+    //         PrefixTest {input: "5 - 5;".to_string(), left_value: 5, operator: "-".to_string(), right_value: 5},
+    //         PrefixTest {input: "5 * 5;".to_string(), left_value: 5, operator: "*".to_string(), right_value: 5},
+    //         PrefixTest {input: "5 / 5;".to_string(), left_value: 5, operator: "/".to_string(), right_value: 5},
+    //         PrefixTest {input: "5 > 5;".to_string(), left_value: 5, operator: ">".to_string(), right_value: 5},
+    //         PrefixTest {input: "5 < 5;".to_string(), left_value: 5, operator: "<".to_string(), right_value: 5},
+    //         PrefixTest {input: "5 == 5;".to_string(), left_value: 5, operator: "==".to_string() , right_value: 5},
+    //         PrefixTest {input: "5 != 5;".to_string(), left_value: 5, operator: "!=".to_string(), right_value: 5},
+    //     ];
+    //
+    //     prefix_tests.iter().for_each(|t| {
+    //         let mut l = Lexer::new(t.input.to_string());
+    //         let mut p = Parser::new(&mut l);
+    //
+    //         let program = p.parse_program();
+    //
+    //         check_parse_errors(p);
+    //
+    //         assert_eq!(program.statements.len(), 1, "Program must contain 1 statement.");
+    //
+    //         match &program.statements[0] {
+    //             ast::StatementNode::Expression(s) => {
+    //                 if let Some(e) = &s.expression {
+    //                     match &e {
+    //                         ast::ExpressionNode::Infix(ie) => {
+    //                             assert_eq!(t.operator, ie.operator);
+    //                             assert_integer_literal(&ie.left, t.left_value);
+    //                             assert_integer_literal(&ie.right, t.right_value);
+    //                         },
+    //                         _ => {
+    //                             panic!("Expression is not an infix")
+    //                         }
+    //                     }
+    //
+    //                 } else {
+    //                     panic!("Statement does not contain an infix expression.")
+    //                 }
+    //             },
+    //             _ => panic!("program.statements[0] is not an expression statemnt.")
+    //         };
+    //     });
+    // }
 
     fn assert_statement(stmt: &ast::StatementNode, name: String) {
         match stmt {
