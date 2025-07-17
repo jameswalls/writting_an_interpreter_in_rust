@@ -4,6 +4,7 @@ use crate::ast::{self, IdentifierExpression};
 use std::fmt::format;
 use std::{mem, panic};
 use std::collections::HashMap;
+use std::rc::Rc;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 enum Priority {
@@ -79,7 +80,7 @@ impl<'a> Parser<'a> {
                     }
                 },
                 _ => {
-                    if let Some(stmt) = self.parse_expression_statement() {
+                    if let Some(stmt) = self.parse_expression_statement(Priority::Lowest) {
                         return Some(ast::StatementNode::Expression(stmt))
                     }
                 }
@@ -123,47 +124,37 @@ impl<'a> Parser<'a> {
         Some(ast::ReturnStatement { token, value: None })
     }
 
-    fn parse_expression_statement(&mut self) -> Option<ast::ExpressionStatement> {
+    fn parse_expression_statement(&mut self, priority: Priority) -> Option<ast::ExpressionStatement> {
         let token = self.cur_token.clone().unwrap();
-        let expression = self.parse_expression(Priority::Lowest);
-        let statement = ast::ExpressionStatement::new(token, expression);
+        let expression = match token.token_type {
+            TokenType::Ident => {
+                let ident = ast::IdentifierExpression::new(&token.literal);
+                ast::ExpressionNode::Identifier(ident)
+            },
+            TokenType::Int => {
+                let ident = ast::IntegerLiteralExpression::new(&token.literal.parse().unwrap());
+                ast::ExpressionNode::IntegerLiteral(ident)
+            }
+            TokenType::Bang|TokenType::Minus => {
+                let operator = token.literal.clone();
+                self.next_token();
+                let right = Rc::new(self.parse_expression_statement(Priority::Prefix).unwrap().expression.unwrap());
+                let ident = ast::PrefixExpression::new(token.clone(), operator, right);
+                ast::ExpressionNode::Prefix(ident)
+            },
+            _ => {
+                let msg = format!("no parsing logic found for token type \"{:?}\"", token.token_type);
+                self.errors.push(msg);
+                return None
+            }
+        };
+        let statement = ast::ExpressionStatement::new(token, Some(expression));
 
         if self.next_token_is(TokenType::SemiColon) {
             self.next_token();
         }
 
         Some(statement)
-    }
-
-    // todo: make this function return a result
-    fn parse_expression(&mut self, priority: Priority) -> Option<ast::ExpressionNode> {
-        if let Some(token) = &self.cur_token {
-            let expression = match token.token_type {
-                TokenType::Ident => {
-                    let ident = ast::IdentifierExpression::new(&token.literal);
-                    ast::ExpressionNode::Identifier(ident)
-                },
-                TokenType::Int => {
-                    let ident = ast::IntegerLiteralExpression::new(&token.literal.parse().unwrap());
-                    ast::ExpressionNode::IntegerLiteral(ident)
-                }
-                TokenType::Bang|TokenType::Minus => {
-                    let token = self.cur_token.as_ref().unwrap().clone();
-                    let operator = self.cur_token.as_ref().unwrap().literal.clone();
-                    self.next_token();
-                    let right = Box::new(self.parse_expression(Priority::Prefix).unwrap());
-                    let ident = ast::PrefixExpression::new(token, operator, right);
-                    ast::ExpressionNode::Prefix(ident)
-                },
-                _ => {
-                    let msg = format!("no parsing logic found for token type \"{:?}\"", token.token_type);
-                    self.errors.push(msg);
-                    return None
-                }
-            };
-            return Some(expression);
-        }
-        None
     }
 
     fn cur_token_is(&self, token_type: TokenType) -> bool {
@@ -455,7 +446,7 @@ return 993322;".to_string();
         panic!()
     }
 
-    fn assert_integer_literal(il: &Box<ast::ExpressionNode>, value: i64) {
+    fn assert_integer_literal(il: &Rc<ast::ExpressionNode>, value: i64) {
         match &**il {
             ast::ExpressionNode::IntegerLiteral(ile) => {
                 assert_eq!(ile.value, value);

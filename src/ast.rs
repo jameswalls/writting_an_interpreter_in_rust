@@ -1,4 +1,5 @@
 use crate::tokens::{Token, TokenType};
+use std::rc::Rc;
 
 enum Node {
     Program(ProgramNode),
@@ -187,11 +188,11 @@ impl IntegerLiteralExpression {
 pub struct PrefixExpression {
     token: Token,
     pub operator: String,
-    pub right: Box<ExpressionNode>,
+    pub right: Rc<ExpressionNode>,
 }
 
 impl PrefixExpression {
-    pub fn new(token: Token, operator: String, right: Box<ExpressionNode>) -> Self {
+    pub fn new(token: Token, operator: String, right: Rc<ExpressionNode>) -> Self {
         PrefixExpression { token, operator, right }
     }
     pub fn token_literal(&self) -> String { self.token.literal.clone() }
