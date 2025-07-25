@@ -21,13 +21,6 @@ enum Precedence {
 }
 
 #[derive(Debug)]
-enum ParseFn {
-    Prefix(fn() -> ast::ExpressionNode),
-    Infix(fn(ast::ExpressionNode) -> ast::ExpressionNode)
-}
-
-
-#[derive(Debug)]
 pub struct Parser<'a> {
     lexer: &'a mut Lexer,
     cur_token: Option<Token>,
