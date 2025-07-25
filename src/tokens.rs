@@ -67,3 +67,14 @@ pub enum TokenType {
     Else,
     Return,
 }
+
+impl TokenType {
+    pub fn is_infix_token(&self) -> bool {
+        matches!(
+            self,
+            TokenType::Plus | TokenType::Eq | TokenType::NotEq | TokenType::LT
+            | TokenType::GT | TokenType::Plus | TokenType::Minus | TokenType::Slash
+            | TokenType::Asterisk
+        )
+    }
+}

@@ -1,13 +1,15 @@
 use crate::lexer::Lexer;
 use crate::tokens::{Token, TokenType};
-use crate::ast::{self, IdentifierExpression};
+use crate::ast::{self, IdentifierExpression, InfixExpression};
 use std::fmt::format;
+use std::ops::Mul;
+use std::str::MatchIndices;
 use std::{mem, panic};
 use std::collections::HashMap;
 use std::rc::Rc;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
-enum Priority {
+enum Precedence {
     None,
     Lowest,
     Equals,
@@ -80,7 +82,7 @@ impl<'a> Parser<'a> {
                     }
                 },
                 _ => {
-                    if let Some(stmt) = self.parse_expression_statement(Priority::Lowest) {
+                    if let Some(stmt) = self.parse_expression_statement(Precedence::Lowest) {
                         return Some(ast::StatementNode::Expression(stmt))
                     }
                 }
@@ -124,7 +126,7 @@ impl<'a> Parser<'a> {
         Some(ast::ReturnStatement { token, value: None })
     }
 
-    fn parse_expression_statement(&mut self, priority: Priority) -> Option<ast::ExpressionStatement> {
+    fn parse_expression_statement(&mut self, precedence: Precedence) -> Option<ast::ExpressionStatement> {
         let token = self.cur_token.clone().unwrap();
         let expression = match token.token_type {
             TokenType::Ident => {
@@ -135,12 +137,35 @@ impl<'a> Parser<'a> {
                 let ident = ast::IntegerLiteralExpression::new(&token.literal.parse().unwrap());
                 ast::ExpressionNode::IntegerLiteral(ident)
             }
+            // parse prefix expression
             TokenType::Bang|TokenType::Minus => {
                 let operator = token.literal.clone();
                 self.next_token();
-                let right = Rc::new(self.parse_expression_statement(Priority::Prefix).unwrap().expression.unwrap());
+                let right = Rc::new(self.parse_expression_statement(Precedence::Prefix).unwrap().expression.unwrap());
                 let ident = ast::PrefixExpression::new(token.clone(), operator, right);
-                ast::ExpressionNode::Prefix(ident)
+                let mut left_expression = ast::ExpressionNode::Prefix(ident);
+
+                while !self.next_token_is(TokenType::SemiColon) && (precedence < self.peek_precedence()) {
+                    let peek_token = self.peek_token.clone().unwrap();
+                    if !peek_token.token_type.is_infix_token() {
+                        break;
+                    }
+
+                    self.next_token();
+
+                    let cur_token = self.cur_token.clone().unwrap();
+                    let operator = cur_token.literal.clone();
+                    let left = Rc::new(left_expression.clone());
+                    let prec = self.cur_precedence();
+                    
+                    self.next_token();
+
+                    let right = Rc::new(self.parse_expression_statement(self.cur_precedence()).unwrap().expression.unwrap());
+
+                    left_expression = ast::ExpressionNode::Infix(ast::InfixExpression::new(cur_token, operator, left, right))
+                }
+
+                left_expression
             },
             _ => {
                 let msg = format!("no parsing logic found for token type \"{:?}\"", token.token_type);
@@ -190,6 +215,26 @@ impl<'a> Parser<'a> {
             self.peek_token.clone().unwrap().token_type
         );
         self.errors.push(msg);
+    }
+
+    fn cur_precedence(&self) -> Precedence {
+        match self.cur_token.clone().unwrap().token_type {
+            TokenType::Eq | TokenType::NotEq => Precedence::Equals,
+            TokenType::LT | TokenType::GT => Precedence::LessGreater,
+            TokenType::Plus | TokenType::Minus => Precedence::Sum,
+            TokenType::Slash | TokenType::Asterisk => Precedence::Product,
+            _ => Precedence::Lowest
+        }
+    }
+
+    fn peek_precedence(&self) -> Precedence {
+        match self.peek_token.clone().unwrap().token_type {
+            TokenType::Eq | TokenType::NotEq => Precedence::Equals,
+            TokenType::LT | TokenType::GT => Precedence::LessGreater,
+            TokenType::Plus | TokenType::Minus => Precedence::Sum,
+            TokenType::Slash | TokenType::Asterisk => Precedence::Product,
+            _ => Precedence::Lowest
+        }
     }
 }
 
@@ -368,58 +413,58 @@ return 993322;".to_string();
         });
     }
     
-    // #[test]
-    // fn test_parsing_infix_expressions() {
-    //     struct PrefixTest {
-    //         input: String,
-    //         left_value: i64,
-    //         operator: String,
-    //         right_value: i64,
-    //     };
-    //
-    //     let prefix_tests = vec![
-    //         PrefixTest {input: "5 + 5;".to_string(), left_value: 5, operator: "+".to_string(), right_value: 5},
-    //         PrefixTest {input: "5 - 5;".to_string(), left_value: 5, operator: "-".to_string(), right_value: 5},
-    //         PrefixTest {input: "5 * 5;".to_string(), left_value: 5, operator: "*".to_string(), right_value: 5},
-    //         PrefixTest {input: "5 / 5;".to_string(), left_value: 5, operator: "/".to_string(), right_value: 5},
-    //         PrefixTest {input: "5 > 5;".to_string(), left_value: 5, operator: ">".to_string(), right_value: 5},
-    //         PrefixTest {input: "5 < 5;".to_string(), left_value: 5, operator: "<".to_string(), right_value: 5},
-    //         PrefixTest {input: "5 == 5;".to_string(), left_value: 5, operator: "==".to_string() , right_value: 5},
-    //         PrefixTest {input: "5 != 5;".to_string(), left_value: 5, operator: "!=".to_string(), right_value: 5},
-    //     ];
-    //
-    //     prefix_tests.iter().for_each(|t| {
-    //         let mut l = Lexer::new(t.input.to_string());
-    //         let mut p = Parser::new(&mut l);
-    //
-    //         let program = p.parse_program();
-    //
-    //         check_parse_errors(p);
-    //
-    //         assert_eq!(program.statements.len(), 1, "Program must contain 1 statement.");
-    //
-    //         match &program.statements[0] {
-    //             ast::StatementNode::Expression(s) => {
-    //                 if let Some(e) = &s.expression {
-    //                     match &e {
-    //                         ast::ExpressionNode::Infix(ie) => {
-    //                             assert_eq!(t.operator, ie.operator);
-    //                             assert_integer_literal(&ie.left, t.left_value);
-    //                             assert_integer_literal(&ie.right, t.right_value);
-    //                         },
-    //                         _ => {
-    //                             panic!("Expression is not an infix")
-    //                         }
-    //                     }
-    //
-    //                 } else {
-    //                     panic!("Statement does not contain an infix expression.")
-    //                 }
-    //             },
-    //             _ => panic!("program.statements[0] is not an expression statemnt.")
-    //         };
-    //     });
-    // }
+    #[test]
+    fn test_parsing_infix_expressions() {
+        struct PrefixTest {
+            input: String,
+            left_value: i64,
+            operator: String,
+            right_value: i64,
+        };
+
+        let prefix_tests = vec![
+            PrefixTest {input: "5 + 5;".to_string(), left_value: 5, operator: "+".to_string(), right_value: 5},
+            PrefixTest {input: "5 - 5;".to_string(), left_value: 5, operator: "-".to_string(), right_value: 5},
+            PrefixTest {input: "5 * 5;".to_string(), left_value: 5, operator: "*".to_string(), right_value: 5},
+            PrefixTest {input: "5 / 5;".to_string(), left_value: 5, operator: "/".to_string(), right_value: 5},
+            PrefixTest {input: "5 > 5;".to_string(), left_value: 5, operator: ">".to_string(), right_value: 5},
+            PrefixTest {input: "5 < 5;".to_string(), left_value: 5, operator: "<".to_string(), right_value: 5},
+            PrefixTest {input: "5 == 5;".to_string(), left_value: 5, operator: "==".to_string() , right_value: 5},
+            PrefixTest {input: "5 != 5;".to_string(), left_value: 5, operator: "!=".to_string(), right_value: 5},
+        ];
+
+        prefix_tests.iter().for_each(|t| {
+            let mut l = Lexer::new(t.input.to_string());
+            let mut p = Parser::new(&mut l);
+
+            let program = p.parse_program();
+
+            check_parse_errors(p);
+
+            assert_eq!(program.statements.len(), 1, "Program must contain 1 statement.");
+
+            match &program.statements[0] {
+                ast::StatementNode::Expression(s) => {
+                    if let Some(e) = &s.expression {
+                        match &e {
+                            ast::ExpressionNode::Infix(ie) => {
+                                assert_eq!(t.operator, ie.operator);
+                                assert_integer_literal(&ie.left, t.left_value);
+                                assert_integer_literal(&ie.right, t.right_value);
+                            },
+                            _ => {
+                                panic!("Expression is not an infix")
+                            }
+                        }
+
+                    } else {
+                        panic!("Statement does not contain an infix expression.")
+                    }
+                },
+                _ => panic!("program.statements[0] is not an expression statemnt.")
+            };
+        });
+    }
 
     fn assert_statement(stmt: &ast::StatementNode, name: String) {
         match stmt {

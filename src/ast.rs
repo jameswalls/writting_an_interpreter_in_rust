@@ -128,11 +128,12 @@ impl ExpressionStatement {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ExpressionNode {
     Identifier(IdentifierExpression),
     IntegerLiteral(IntegerLiteralExpression),
     Prefix(PrefixExpression),
+    Infix(InfixExpression)
 }
 impl ExpressionNode {
     fn token_literal(&self) -> String { todo!() }
@@ -141,11 +142,12 @@ impl ExpressionNode {
             ExpressionNode::Identifier(i) => i.string(),
             ExpressionNode::IntegerLiteral(i) => i.string(),
             ExpressionNode::Prefix(i) => i.string(),
+            ExpressionNode::Infix(i) => i.string(),
         }
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IdentifierExpression {
     token: Token,
     pub value: String,
@@ -165,7 +167,7 @@ impl IdentifierExpression {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IntegerLiteralExpression {
     token: Token,
     pub value: i64,
@@ -184,7 +186,7 @@ impl IntegerLiteralExpression {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PrefixExpression {
     token: Token,
     pub operator: String,
@@ -200,6 +202,32 @@ impl PrefixExpression {
         vec![
             "(".to_string(),
             self.operator.clone(),
+            self.right.string(),
+            ")".to_string(),
+        ].join("")
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct InfixExpression {
+    token: Token,
+    pub left: Rc<ExpressionNode>,
+    pub operator: String,
+    pub right: Rc<ExpressionNode>,
+}
+
+impl InfixExpression {
+    pub fn new(token: Token, operator: String, left: Rc<ExpressionNode>, right: Rc<ExpressionNode>) -> Self {
+        InfixExpression { token, operator, left, right }
+    }
+    pub fn token_literal(&self) -> String { self.token.literal.clone() }
+    fn string(&self) -> String {
+        vec![
+            "(".to_string(),
+            self.left.string(),
+            " ".to_string(),
+            self.operator.clone(),
+            " ".to_string(),
             self.right.string(),
             ")".to_string(),
         ].join("")
