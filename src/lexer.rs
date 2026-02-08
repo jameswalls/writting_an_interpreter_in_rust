@@ -1,4 +1,7 @@
-use crate::tokens::{Token, TokenType};
+use crate::tokens::{
+    Token,
+    TokenType,
+};
 
 pub struct Lexer {
     input: String,
@@ -9,11 +12,11 @@ pub struct Lexer {
 
 impl Lexer {
     pub fn new(input: String) -> Self {
-        let mut lexer = Self { 
+        let mut lexer = Self {
             input,
             position: 0,
             read_position: 0,
-            ch: 0
+            ch: 0,
         };
         lexer.read_char();
         lexer
@@ -26,7 +29,7 @@ impl Lexer {
     }
 
     fn peek_char(&self) -> u8 {
-       *self.input.as_bytes().get(self.read_position).unwrap_or(&0)
+        *self.input.as_bytes().get(self.read_position).unwrap_or(&0)
     }
 
     pub fn next_token(&mut self) -> Option<Token> {
@@ -36,11 +39,10 @@ impl Lexer {
                 if self.peek_char() == b'=' {
                     self.read_char();
                     (TokenType::Eq, "==".to_string())
-                }
-                else {
+                } else {
                     (TokenType::Assign, "=".to_string())
                 }
-            },
+            }
             b';' => (TokenType::SemiColon, ";".to_string()),
             b'(' => (TokenType::LParen, "(".to_string()),
             b')' => (TokenType::RParen, ")".to_string()),
@@ -51,11 +53,10 @@ impl Lexer {
                 if self.peek_char() == b'=' {
                     self.read_char();
                     (TokenType::NotEq, "!=".to_string())
-                }
-                else {
+                } else {
                     (TokenType::Bang, "!".to_string())
                 }
-            },
+            }
             b'*' => (TokenType::Asterisk, "*".to_string()),
             b'/' => (TokenType::Slash, "/".to_string()),
             b'<' => (TokenType::LT, "<".to_string()),
@@ -67,13 +68,12 @@ impl Lexer {
                 if is_letter(self.ch) {
                     let literal = self.read_identifier();
                     let token_type = Token::lookup_indent(&literal);
-                    return Some(Token::new(token_type, literal))
+                    return Some(Token::new(token_type, literal));
                 } else if is_digit(self.ch) {
                     let literal = self.read_number();
                     let token_type = TokenType::Int;
-                    return Some(Token::new(token_type, literal))
-                }
-                else {
+                    return Some(Token::new(token_type, literal));
+                } else {
                     (TokenType::Illegal, (self.ch as char).to_string())
                 }
             }
@@ -105,7 +105,6 @@ impl Lexer {
             self.read_char();
         }
     }
-
 }
 
 fn is_letter(ch: u8) -> bool {
@@ -123,7 +122,8 @@ mod tests {
     #[test]
     fn test_next_token() {
         let input = "\
-=+(){},;".to_string();
+=+(){},;"
+            .to_string();
 
         let expected: Vec<(TokenType, String)> = vec![
             (TokenType::Assign, "=".to_string()),
@@ -164,7 +164,8 @@ if (5 < 10) {
 
 10 == 10;
 10 != 9;
-".to_string();
+"
+        .to_string();
 
         let expected: Vec<(TokenType, String)> = vec![
             (TokenType::Let, "let".to_string()),
@@ -248,6 +249,5 @@ if (5 < 10) {
             assert_eq!(Some(Token::new(*tt, l.clone())), lexer.next_token())
         });
         assert_eq!(None, lexer.next_token())
-    
     }
 }
